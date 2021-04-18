@@ -1,6 +1,6 @@
 pub use async_trait::async_trait;
 
-use super::models::{alert::Alert, user::User, rating::Rating};
+use super::models::{alert::Alert, rating::Rating, user::User};
 
 pub mod csv;
 #[async_trait]

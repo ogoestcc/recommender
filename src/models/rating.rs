@@ -14,14 +14,13 @@ pub struct Rating {
     pub critical: bool,
 }
 
-
 mod int_to_bool {
     use serde::{Deserialize, Deserializer};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
     where
         D: Deserializer<'de>,
-    { 
+    {
         Ok(u16::deserialize(deserializer)? == 1u16)
     }
 }

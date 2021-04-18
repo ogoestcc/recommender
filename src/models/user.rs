@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 
 use serde::Deserialize;
@@ -10,7 +9,7 @@ pub struct User {
     #[serde(with = "preferences")]
     pub preferences: Vec<String>,
     pub ratings: Option<HashMap<String, i32>>,
-    pub similarity: Option<Vec<(u32, f32)>>
+    pub similarity: Option<Vec<(u32, f32)>>,
 }
 
 mod preferences {
@@ -19,7 +18,7 @@ mod preferences {
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
     where
         D: Deserializer<'de>,
-    { 
+    {
         Ok(String::deserialize(deserializer)?
             .replace(&['[', ']', '\'', ' '][..], "")
             .split(',')
@@ -27,4 +26,3 @@ mod preferences {
             .collect())
     }
 }
-
