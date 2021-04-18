@@ -1,13 +1,16 @@
 
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct User {
     #[serde(rename = "user_id")]
-    id: u32,
+    pub id: u32,
     #[serde(with = "preferences")]
-    preferences: Vec<String>,
-    ratings: Option<Vec<super::rating::Rating>>,
+    pub preferences: Vec<String>,
+    pub ratings: Option<HashMap<String, i32>>,
+    pub similarity: Option<Vec<(u32, f32)>>
 }
 
 mod preferences {

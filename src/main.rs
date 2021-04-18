@@ -3,6 +3,7 @@ mod database;
 mod models;
 
 use database::{csv::CSVDatabase, Database};
+use models::recommender::RecommenderBuilder;
 
 #[tokio::main]
 async fn main() {
@@ -19,4 +20,13 @@ async fn main() {
     println!("ratings: {:?}", ratings[0]);
     println!("alerts: {:?}", alerts[0]);
 
+
+    let recommender = RecommenderBuilder::build(users, alerts, ratings).await;
+
+    // for user in recommender.users {
+    //     println!("{}", user.0);
+    // }
+
+    println!("users {:#?}", recommender.users.get(&1u32));
+    // println!("alerts {:#?}", recommender.alerts);
 }

@@ -1,11 +1,12 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Alert {
     #[serde(rename = "cveid")]
-    id: String,
-    cvss_score: f32,
-    provider: String,
-    product: String,
-    description: String,
+    pub id: String,
+    pub cvss_score: f32,
+    pub provider: String,
+    pub product: String,
+    pub description: String,
+    pub score: Option<f32>,
 }

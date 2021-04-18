@@ -1,17 +1,17 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Rating {
     #[serde(rename = "userid")]
-    user_id: u32,
+    pub user_id: u32,
     #[serde(rename = "cveid")]
-    alert_id: String,
+    pub alert_id: String,
     #[serde(with = "int_to_bool")]
-    like: bool,
+    pub like: bool,
     #[serde(with = "int_to_bool")]
-    dislike: bool,
+    pub dislike: bool,
     #[serde(with = "int_to_bool")]
-    critical: bool,
+    pub critical: bool,
 }
 
 
