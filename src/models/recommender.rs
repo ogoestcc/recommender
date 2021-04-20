@@ -154,7 +154,7 @@ impl RecommenderBuilder {
         hash
     }
 
-    async fn build_alerts(alerts: Vec<Alert>, ratings: &Vec<Rating>) -> HashMap<String, Alert> {
+    async fn build_alerts(alerts: &mut Vec<Alert>, ratings: &Vec<Rating>) -> HashMap<String, Alert> {
         let mut hash: HashMap<String, Alert> = HashMap::new();
 
         let rating_votes = |rating: &Rating| {
@@ -188,9 +188,9 @@ impl RecommenderBuilder {
                 .iter()
                 .fold(&mut alert_score, RecommenderBuilder::rating_score);
 
-            let alpha = 1;
+            let alpha = 4;
             let beta = 1;
-            let phi = 1;
+            let phi = 2;
 
             (alpha * score.0) + (beta * score.1) + (phi * score.2)
         };
@@ -198,8 +198,8 @@ impl RecommenderBuilder {
         let rating_avg = rating_votes_sum(&ratings) / ratings.len() as f32;
         let ratings_score = ranking_score(&ratings);
 
-        for alert in alerts.iter() {
-            let alert = &mut alert.to_owned();
+        for alert in alerts.iter_mut() {
+            // let alert = &mut alert.to_owned();
             let alert_ratings = ratings
                 .iter()
                 .filter(|rating| rating.alert_id == alert.id)
@@ -221,7 +221,7 @@ impl RecommenderBuilder {
         hash
     }
 
-    pub async fn build(users: Vec<User>, alerts: Vec<Alert>, ratings: Vec<Rating>) -> Recommender {
+    pub async fn build(users: Vec<User>, alerts: &mut Vec<Alert>, ratings: Vec<Rating>) -> Recommender {
         let (users, alerts) = futures::join!(
             RecommenderBuilder::build_users(users, &ratings),
             RecommenderBuilder::build_alerts(alerts, &ratings)
