@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{alert::Alert, rating::Rating, user::User};
+use super::{alert::Alert, user::User};
 
 #[derive(Debug, Clone)]
 pub struct Recommender {
@@ -68,169 +68,169 @@ impl Recommender {
     }
 }
 
-pub struct RecommenderBuilder;
+// pub struct RecommenderBuilder;
 
-impl RecommenderBuilder {
-    fn rating_score<'l>(acc: &'l mut (i32, i32, i32), rating: &Rating) -> &'l mut (i32, i32, i32) {
-        if rating.critical {
-            acc.0 += 1;
-        }
+// impl RecommenderBuilder {
+//     fn rating_score<'l>(acc: &'l mut (i32, i32, i32), rating: &Rating) -> &'l mut (i32, i32, i32) {
+//         if rating.critical {
+//             acc.0 += 1;
+//         }
 
-        if rating.like {
-            acc.1 += 1;
-        }
+//         if rating.like {
+//             acc.1 += 1;
+//         }
 
-        if rating.dislike {
-            acc.2 += 1;
-        }
+//         if rating.dislike {
+//             acc.2 += 1;
+//         }
 
-        acc
-    }
+//         acc
+//     }
 
-    async fn build_users(users: Vec<User>, ratings: &Vec<Rating>) -> HashMap<u32, User> {
-        let mut hash: HashMap<u32, User> = HashMap::new();
+//     async fn build_users(users: Vec<User>, ratings: &Vec<Rating>) -> HashMap<u32, User> {
+//         let mut hash: HashMap<u32, User> = HashMap::with_capacity(users.len());
 
-        for user in users.iter() {
-            let user = &mut user.to_owned();
-            for (id, inserted_user) in &mut hash {
-                let intersection: Vec<&String> = user
-                    .preferences
-                    .iter()
-                    .filter(|p| {
-                        inserted_user
-                            .preferences
-                            .iter()
-                            .find(|pref| pref == p)
-                            .is_some()
-                    })
-                    .collect();
+//         for user in users.iter() {
+//             let user = &mut user.to_owned();
+//             for (id, inserted_user) in &mut hash {
+//                 let intersection: Vec<&String> = user
+//                     .preferences
+//                     .iter()
+//                     .filter(|p| {
+//                         inserted_user
+//                             .preferences
+//                             .iter()
+//                             .find(|pref| pref == p)
+//                             .is_some()
+//                     })
+//                     .collect();
 
-                let similarity = intersection.len() as f32
-                    / (user.preferences.len() as f32 + inserted_user.preferences.len() as f32
-                        - intersection.len() as f32);
+//                 let similarity = intersection.len() as f32
+//                     / (user.preferences.len() as f32 + inserted_user.preferences.len() as f32
+//                         - intersection.len() as f32);
 
-                if let None = user.similarity {
-                    user.similarity = Some(vec![]);
-                }
+//                 if let None = user.similarity {
+//                     user.similarity = Some(vec![]);
+//                 }
 
-                user.similarity
-                    .as_mut()
-                    .unwrap()
-                    .push((id.to_owned(), similarity));
+//                 user.similarity
+//                     .as_mut()
+//                     .unwrap()
+//                     .push((id.to_owned(), similarity));
 
-                if let None = inserted_user.similarity {
-                    inserted_user.similarity = Some(vec![]);
-                }
+//                 if let None = inserted_user.similarity {
+//                     inserted_user.similarity = Some(vec![]);
+//                 }
 
-                inserted_user
-                    .similarity
-                    .as_mut()
-                    .unwrap()
-                    .push((user.id.to_owned(), similarity));
-            }
+//                 inserted_user
+//                     .similarity
+//                     .as_mut()
+//                     .unwrap()
+//                     .push((user.id.to_owned(), similarity));
+//             }
 
-            let mut ratings_scores_by_alert_id = HashMap::new();
+//             let mut ratings_scores_by_alert_id = HashMap::new();
 
-            let alpha = 1;
-            let beta = 1;
-            let phi = 1;
+//             let alpha = 4;
+//             let beta = 1;
+//             let phi = 2;
 
-            for rating in ratings {
-                if rating.user_id == user.id {
-                    let score = RecommenderBuilder::rating_score(&mut (0, 0, 0), rating).to_owned();
+//             for rating in ratings {
+//                 if rating.user_id == user.id {
+//                     let score = RecommenderBuilder::rating_score(&mut (0, 0, 0), rating).to_owned();
 
-                    ratings_scores_by_alert_id.insert(
-                        rating.alert_id.clone(),
-                        (alpha * score.0) + (beta * score.1) + (phi * score.2),
-                    );
-                }
-            }
+//                     ratings_scores_by_alert_id.insert(
+//                         rating.alert_id.clone(),
+//                         ((alpha * score.0) + (beta * score.1) - (phi * score.2)) as i32,
+//                     );
+//                 }
+//             }
 
-            user.ratings = Some(ratings_scores_by_alert_id);
+//             user.ratings = Some(ratings_scores_by_alert_id);
 
-            hash.insert(user.id, user.to_owned());
-        }
+//             hash.insert(user.id, user.to_owned());
+//         }
 
-        hash
-    }
+//         hash
+//     }
 
-    async fn build_alerts(alerts: &mut Vec<Alert>, ratings: &Vec<Rating>) -> HashMap<String, Alert> {
-        let mut hash: HashMap<String, Alert> = HashMap::new();
+//     async fn build_alerts(alerts: &mut Vec<Alert>, ratings: &Vec<Rating>) -> HashMap<String, Alert> {
+//         let mut hash: HashMap<String, Alert> = HashMap::with_capacity(alerts.len());
 
-        let rating_votes = |rating: &Rating| {
-            let mut votes = 0;
+//         let rating_votes = |rating: &Rating| {
+//             let mut votes = 0;
 
-            if rating.like {
-                votes += 1;
-            }
+//             if rating.like {
+//                 votes += 1;
+//             }
 
-            if rating.dislike {
-                votes += 1;
-            }
+//             if rating.dislike {
+//                 votes += 1;
+//             }
 
-            if rating.critical {
-                votes += 1;
-            }
+//             if rating.critical {
+//                 votes += 1;
+//             }
 
-            votes
-        };
+//             votes
+//         };
 
-        let rating_votes_sum = |ratings: &Vec<Rating>| {
-            ratings
-                .iter()
-                .fold(0f32, |sum, rating| sum + rating_votes(rating) as f32)
-        };
+//         let rating_votes_sum = |ratings: &Vec<Rating>| {
+//             ratings
+//                 .iter()
+//                 .fold(0f32, |sum, rating| sum + rating_votes(rating) as f32)
+//         };
 
-        let ranking_score = |ratings: &Vec<Rating>| {
-            let mut alert_score = (0, 0, 0);
+//         let ranking_score = |ratings: &Vec<Rating>| {
+//             let mut alert_score = (0, 0, 0);
 
-            let score = ratings
-                .iter()
-                .fold(&mut alert_score, RecommenderBuilder::rating_score);
+//             let score = ratings
+//                 .iter()
+//                 .fold(&mut alert_score, RecommenderBuilder::rating_score);
 
-            let alpha = 4;
-            let beta = 1;
-            let phi = 2;
+//             let alpha = 4;
+//             let beta = 1;
+//             let phi = 2;
 
-            (alpha * score.0) + (beta * score.1) + (phi * score.2)
-        };
+//             (alpha * score.0) + (beta * score.1) - (phi * score.2)
+//         };
 
-        let rating_avg = rating_votes_sum(&ratings) / ratings.len() as f32;
-        let ratings_score = ranking_score(&ratings);
+//         let rating_avg = rating_votes_sum(&ratings) / ratings.len() as f32;
+//         let ratings_score = ranking_score(&ratings);
 
-        for alert in alerts.iter_mut() {
-            // let alert = &mut alert.to_owned();
-            let alert_ratings = ratings
-                .iter()
-                .filter(|rating| rating.alert_id == alert.id)
-                .map(|r| r.to_owned())
-                .collect::<Vec<_>>();
+//         for alert in alerts.iter_mut() {
+//             // let alert = &mut alert.to_owned();
+//             let alert_ratings = ratings
+//                 .iter()
+//                 .filter(|rating| rating.alert_id == alert.id)
+//                 .map(|r| r.to_owned())
+//                 .collect::<Vec<_>>();
 
-            let alert_score: i32 = ranking_score(&alert_ratings);
-            let alerts_votes = rating_votes_sum(&alert_ratings);
+//             let alert_score: i32 = ranking_score(&alert_ratings);
+//             let alerts_votes = rating_votes_sum(&alert_ratings);
 
-            alert.score = Some(
-                ((rating_avg * ratings_score as f32) + (alerts_votes * alert_score as f32))
-                    / rating_avg
-                    + alert_score.abs() as f32,
-            );
+//             alert.score = Some(
+//                 ((rating_avg * ratings_score as f32) + (alerts_votes * alert_score as f32))
+//                     / rating_avg
+//                     + alert_score.abs() as f32,
+//             );
 
-            hash.insert(alert.id.clone(), alert.to_owned());
-        }
+//             hash.insert(alert.id.clone(), alert.to_owned());
+//         }
 
-        hash
-    }
+//         hash
+//     }
 
-    pub async fn build(users: Vec<User>, alerts: &mut Vec<Alert>, ratings: Vec<Rating>) -> Recommender {
-        let (users, alerts) = futures::join!(
-            RecommenderBuilder::build_users(users, &ratings),
-            RecommenderBuilder::build_alerts(alerts, &ratings)
-        );
+//     pub async fn build(users: Vec<User>, alerts: &mut Vec<Alert>, ratings: Vec<Rating>) -> Recommender {
+//         let (users, alerts) = futures::join!(
+//             RecommenderBuilder::build_users(users, &ratings),
+//             RecommenderBuilder::build_alerts(alerts, &ratings)
+//         );
 
-        Recommender {
-            users,
-            alerts,
-            // ratings: &ratings,
-        }
-    }
-}
+//         Recommender {
+//             users,
+//             alerts,
+//             // ratings: &ratings,
+//         }
+//     }
+// }
