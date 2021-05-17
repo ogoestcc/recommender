@@ -1,7 +1,11 @@
+mod collaborative_filtering;
 mod content_based;
+mod top_n;
 use crate::models::recommender;
 
+use collaborative_filtering::handler as collaborative_filtering_handler;
 use content_based::handler as content_based_handler;
+use top_n::handler as top_n_handler;
 
 use super::protos::recommender as protos;
 
@@ -15,74 +19,68 @@ impl RecommenderService {
         Self { recommender_data }
     }
 
-    pub fn service(self) -> types::recommender::content_based::Server<Self> {
-        types::recommender::content_based::Server::new(self)
+    pub fn service(self) -> types::recommender::Server<Self> {
+        types::recommender::Server::new(self)
     }
 }
 
 #[async_trait::async_trait]
-impl types::recommender::content_based::Service for RecommenderService {
+impl types::recommender::Service for RecommenderService {
     async fn content_based(
         &self,
         request: types::recommender::content_based::Input,
     ) -> types::recommender::content_based::Output {
         content_based_handler(&self.recommender_data, request).await
     }
+
+    async fn collaborative_filtering(
+        &self,
+        request: types::recommender::collaborative_filtering::Input,
+    ) -> types::recommender::collaborative_filtering::Output {
+        collaborative_filtering_handler(&self.recommender_data, request).await
+    }
+
+    async fn top_n(
+        &self,
+        request: types::recommender::top_n::Input,
+    ) -> types::recommender::top_n::Output {
+        top_n_handler(&self.recommender_data, request).await
+    }
 }
 
 pub mod types {
     use super::protos;
 
-    // pub mod alerts {
-    //     use super::{proto, types};
-
-    //     pub use types::Alert;
-
-    //     impl<T: Into<Alert> + Clone> From<&T> for Alert {
-    //         fn from(value: &T) -> Self {
-    //             value.clone().into()
-    //         }
-    //     }
-
-    //     impl From<crate::models::alert::Alert> for Alert {
-    //         fn from(alert: crate::models::alert::Alert) -> Self {
-    //             Self {
-    //                 id: alert.id,
-    //                 cvss_score: Some(alert.cvss_score),
-    //                 provider: alert.provider,
-    //                 product: alert.product,
-    //                 // published_at: alert.published_at,
-    //                 description: alert.description,
-    //                 ..Default::default()
-    //             }
-    //         }
-    //     }
-
-    //     // impl Into<crate::models::alerts::Alert> for &Alert {
-    //     //     fn into(self) -> crate::services::recommender::types::alerts::Alert {
-    //     //         crate::services::recommender::types::alerts::Alert {
-    //     //             id: self.id,
-    //     //             cvss_score: Some(self.cvss_score),
-    //     //             provider: self.provider,
-    //     //             product: self.product,
-    //     //             published_at: "".into(),
-    //     //             description: self.description,
-    //     //         }
-    //     //     }
-    //     // }
-    // }
-
     pub mod recommender {
         use super::protos;
+
+        pub use protos::{
+            recommender_server::Recommender as Service,
+            recommender_server::RecommenderServer as Server,
+        };
 
         pub mod content_based {
             use super::protos;
 
-            pub use protos::{
-                content_based::{Request, Response},
-                recommender_server::Recommender as Service,
-                recommender_server::RecommenderServer as Server,
-            };
+            pub use protos::content_based::{Request, Response};
+
+            pub type Input = tonic::Request<Request>;
+            pub type Output = Result<tonic::Response<Response>, tonic::Status>;
+        }
+
+        pub mod collaborative_filtering {
+            use super::protos;
+
+            pub use protos::collaborative_filtering::{Request, Response};
+
+            pub type Input = tonic::Request<Request>;
+            pub type Output = Result<tonic::Response<Response>, tonic::Status>;
+        }
+
+        pub mod top_n {
+            use super::protos;
+
+            pub use protos::top_n::{Request, Response};
 
             pub type Input = tonic::Request<Request>;
             pub type Output = Result<tonic::Response<Response>, tonic::Status>;

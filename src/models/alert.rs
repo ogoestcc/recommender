@@ -15,6 +15,12 @@ pub struct Alert {
     pub score: Option<f32>,
 }
 
+impl Alert {
+    pub fn filter_content(&self, content: &String) -> bool {
+        &self.product == content || &self.provider == content
+    }
+}
+
 impl PartialEq for Alert {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id

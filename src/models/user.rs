@@ -18,6 +18,20 @@ pub struct User {
     // pub prefs: Vec<Contents>,
 }
 
+impl User {
+    pub fn alert_rating(&self, alert_id: &String) -> i32 {
+        if let Some(ratings) = &self.ratings {
+            if let Some(rating) = ratings.get(alert_id) {
+                *rating
+            } else {
+                0
+            }
+        } else {
+            0
+        }
+    }
+}
+
 mod preferences {
     use serde::{Deserialize, Deserializer};
 
