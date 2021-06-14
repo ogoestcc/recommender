@@ -55,7 +55,7 @@ impl Recommender {
             .filter(|alert| {
                 let alert = alert.to_owned().to_owned();
 
-                Recommender::include_preferences(user, alert) && viewed_method(user, alert)
+                viewed_method(user, alert)
             })
             .collect::<Vec<_>>();
 
