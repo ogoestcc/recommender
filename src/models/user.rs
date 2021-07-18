@@ -3,9 +3,11 @@ use std::collections::HashMap;
 use serde::Deserialize;
 
 use crate::{
-    models::rating::Rating,
+    models::rating::UserRatings,
     services::types::users::{contents, ratings},
 };
+
+use super::alert::Alert;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct User {
@@ -13,21 +15,29 @@ pub struct User {
     pub id: u32,
     #[serde(with = "preferences")]
     pub preferences: Vec<String>,
-    pub ratings: Option<HashMap<String, i32>>,
+    pub ratings: Option<UserRatings>,
     pub similarity: Option<Vec<(u32, f32)>>,
     // pub prefs: Vec<Contents>,
 }
 
 impl User {
     pub fn alert_rating(&self, alert_id: &String) -> i32 {
-        if let Some(ratings) = &self.ratings {
-            if let Some(rating) = ratings.get(alert_id) {
-                *rating
-            } else {
-                0
-            }
-        } else {
-            0
+        self.ratings
+            .as_ref()
+            .map_or(0, |r| r.alert_rating(alert_id))
+    }
+
+    pub fn alert_score(&self, alert: &Alert) -> f32 {
+        match &self.ratings {
+            Some(rating) => rating.relevance(&alert.id) * alert.score.unwrap_or(0.),
+            None => alert.score.unwrap_or(0.),
+        }
+    }
+
+    pub fn alert_score_by_id(&self, alert: &String, score: f32) -> f32 {
+        match &self.ratings {
+            Some(rating) => rating.relevance(alert) * score,
+            None => score,
         }
     }
 }
@@ -49,17 +59,19 @@ mod preferences {
 
 impl From<ratings::UsersRatings> for User {
     fn from(base: ratings::UsersRatings) -> Self {
-        let mut ratings = HashMap::with_capacity(base.ratings.len());
+        let mut ratings = (!base.ratings.is_empty()).then(|| UserRatings::default());
 
         for rating in base.ratings {
-            let rating = Rating::from(rating);
-            ratings.insert(rating.alert_id.clone(), rating.score());
+            match &mut ratings {
+                Some(r) => r.push(rating.into()),
+                None => 0,
+            };
         }
 
         Self {
             id: base.user.id as u32,
             preferences: vec![],
-            ratings: Some(ratings),
+            ratings,
             similarity: None,
         }
     }

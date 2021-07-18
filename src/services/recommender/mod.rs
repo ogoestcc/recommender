@@ -1,7 +1,7 @@
 mod collaborative_filtering;
 mod content_based;
 mod top_n;
-use crate::models::recommender;
+use crate::recommender;
 
 use collaborative_filtering::handler as collaborative_filtering_handler;
 use content_based::handler as content_based_handler;
@@ -46,6 +46,19 @@ impl types::recommender::Service for RecommenderService {
     ) -> types::recommender::top_n::Output {
         top_n_handler(&self.recommender_data, request).await
     }
+
+    async fn load_user_data(
+        &self,
+        request: types::recommender::load_data::Input,
+    ) -> types::recommender::load_data::Output {
+        self.recommender_data
+            .clone()
+            .load_user_data(request.into_inner().user_id)
+            .await
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+
+        Ok(tonic::Response::new(Default::default()))
+    }
 }
 
 pub mod types {
@@ -81,6 +94,15 @@ pub mod types {
             use super::protos;
 
             pub use protos::top_n::{Request, Response};
+
+            pub type Input = tonic::Request<Request>;
+            pub type Output = Result<tonic::Response<Response>, tonic::Status>;
+        }
+
+        pub mod load_data {
+            use super::protos;
+
+            pub use protos::load_data::{Request, Response};
 
             pub type Input = tonic::Request<Request>;
             pub type Output = Result<tonic::Response<Response>, tonic::Status>;

@@ -1,10 +1,12 @@
 mod database;
+pub mod redis;
 mod server;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Config {
     pub server: server::ServerConfig,
     pub db: database::DatabaseConfig,
+    pub redis: redis::RedisConfig,
 }
 
 impl Config {

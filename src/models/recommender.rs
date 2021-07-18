@@ -1,3 +1,4 @@
+use array_tool::vec::Intersect;
 use std::{cmp::Ordering, collections::HashMap};
 
 use super::{alert::Alert, user::User};
@@ -12,6 +13,14 @@ pub struct Recommender {
 
 /// PERSONALIZED RECOMMENDATION
 impl Recommender {
+    pub fn users_similarity(left: &Vec<String>, right: Vec<String>) -> f32 {
+        let right_size = right.len();
+        let intersection: Vec<_> = left.intersect(right);
+
+        intersection.len() as f32
+            / (left.len() as f32 + right_size as f32 - intersection.len() as f32)
+    }
+
     fn not_viewed(user: &User, alert: &Alert) -> bool {
         if let Some(ratings) = &user.ratings {
             ratings.get(&alert.id).is_none()
@@ -26,6 +35,27 @@ impl Recommender {
         preferences
             .iter()
             .any(|pref| (*pref == alert.product || *pref == alert.provider))
+    }
+
+    fn sort_alerts<'u, T: 'u>(
+        user: &'u User,
+        get_id: for<'a> fn(&'a T) -> &'a String,
+        get_score: for<'a> fn(&'a T) -> f32,
+    ) -> impl FnMut(&T, &T) -> Ordering + 'u {
+        move |left, right| {
+            let left = user.alert_score_by_id(get_id(left), get_score(left));
+            let right = user.alert_score_by_id(get_id(right), get_score(right));
+
+            let order = if left > right {
+                Ordering::Greater
+            } else if left < right {
+                Ordering::Less
+            } else {
+                Ordering::Equal
+            };
+
+            order.reverse()
+        }
     }
 
     pub fn content_based(
@@ -48,18 +78,22 @@ impl Recommender {
 
         let user = user.unwrap();
 
-        let alerts = self.alerts.values().collect::<Vec<_>>();
+        let mut alerts = self.alerts.values().collect::<Vec<_>>();
 
-        let mut alerts = alerts
-            .iter()
-            .filter(|alert| {
-                let alert = alert.to_owned().to_owned();
+        // let mut alerts = alerts
+        //     .iter()
+        //     .filter(|alert| {
+        //         let alert = alert.to_owned().to_owned();
 
-                viewed_method(user, alert)
-            })
-            .collect::<Vec<_>>();
+        //         viewed_method(user, alert)
+        //     })
+        //     .collect::<Vec<_>>();
 
-        alerts.sort_by(|left, right| right.cmp(left).reverse());
+        alerts.sort_by(Recommender::sort_alerts::<&Alert>(
+            user,
+            |a| &a.id,
+            |a| a.score.unwrap_or(0.),
+        ));
 
         let limit = if alert_number as usize > alerts.len() {
             alerts.len()
@@ -68,10 +102,7 @@ impl Recommender {
         };
 
         let slice = &alerts[..limit];
-        slice
-            .iter()
-            .map(|alert| alert.to_owned().to_owned())
-            .collect()
+        slice.iter().map(|alert| alert.to_owned()).collect()
     }
 
     pub fn collaborative_filtering(&self, user_id: u32, alert_number: u16) -> Vec<&Alert> {
@@ -107,17 +138,11 @@ impl Recommender {
             })
             .collect();
 
-        alerts.sort_by(|a, b| {
-            let order = if a.1 > b.1 {
-                Ordering::Greater
-            } else if a.1 < b.1 {
-                Ordering::Less
-            } else {
-                Ordering::Equal
-            };
-
-            order.reverse()
-        });
+        alerts.sort_by(Recommender::sort_alerts::<(&&Alert, f32)>(
+            user,
+            |(a, _)| &a.id,
+            |(_, s)| *s,
+        ));
 
         let limit = if alert_number as usize > alerts.len() {
             alerts.len()
